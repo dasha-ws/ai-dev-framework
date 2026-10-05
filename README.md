@@ -1,8 +1,8 @@
-# ai-dev-framework
+**English** | [Русский](README.ru.md)
 
-[Русская версия](README.ru.md)
+# AI-Dev-Framework
 
-ai-dev-framework helps you build projects with AI through a clear development process – from the initial idea and requirements to architecture, implementation, verification, and deployment. The framework currently works with Claude Code.
+ai-dev-framework helps you build projects with AI through a clear development process – from the initial idea and requirements to architecture, implementation, verification, and deployment. The framework currently works with [Claude Code](https://claude.com/product/claude-code).
 
 Important decisions, requirements, and project context are kept directly in the repository. This means you do not have to re-explain to the AI what the project is, what has already been decided, and what should happen next every time you return to it.
 
@@ -12,7 +12,7 @@ You can use it to build Telegram bots, websites, web applications, APIs and back
 
 For people who want to build their own projects with AI – even if they have not worked with Claude Code or other coding AI before and have never followed a full software-development process.
 
-Professional software-development experience is not required, but this is not a no-code tool: some technical understanding will still be useful as you work through the project.
+Professional software-development experience is not required. This is not a no-code tool, but anything that is unclear can be discussed separately with AI: use one chat to build the project with the framework, and another to ask any questions about terminology, decisions, and what is happening at each stage.
 
 ## How it works
 
@@ -23,6 +23,7 @@ The framework includes 11 AI roles. Ten are reviewers that independently check r
 This is not an autonomous software factory. You start each stage yourself. If a required decision cannot be established from the project, the framework asks you. Product and business decisions stay with you.
 
 - **Project-local context.** `/init-project` adds a small context to your project: product, architecture, development, infrastructure and, where applicable, UX conventions. A router tells Claude Code what to read for a particular task.
+- **Working language.** Before the project starts, the framework asks which language you prefer to work in. Specifications and other artifacts of your project are created in that language, while the framework's own internal files and instructions remain in English.
 - **Specifications as inputs.** Requirements and technical design are written to files before code is written, and implementation follows them.
 - **Skills.** Each stage is a skill, a slash command with one job: some skills write specifications, others review them, one skill performs implementation, and `/deploy` performs the actual deployment.
 - **Reviewer agents.** Reviewers are called by the relevant skills to independently check a result. They do not edit your project files, and you do not normally call them yourself. `ui-designer` is the exception: you invoke it yourself when it is genuinely needed.
@@ -242,4 +243,4 @@ The installer refreshes every current framework skill and the runtime template t
 
 MIT License — see [`LICENSE`](LICENSE).
 
-© 2026 Daria Lyam
+© 2026 Darya Lyam
