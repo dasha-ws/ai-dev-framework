@@ -144,7 +144,7 @@ A dirty tree does not block by itself. Changes of the work item may be the very 
 
 **Secrets.** Never ask the user to paste secret values, and never print, log or expose tokens, passwords, private keys, connection strings with credentials, API secrets or secret values. Reasoning about required secret or configuration names, and a safe project-defined presence check, is fine. A required secret or configuration that is concretely known to be missing may be a blocking finding. If its state cannot be established safely: `BLOCKED — NO VERDICT`.
 
-**Migrations and data.** Inspect the migrations and use safe local or test validation or a dry-run where the project supports it. Never apply a migration to a production or shared database, mutate customer data, or roll back destructively on shared data. A migration that cannot be shown safe enough for the target is a blocking readiness issue, or `BLOCKED — NO VERDICT` if the evidence cannot be obtained.
+**Migrations and data.** Inspect the migrations and use safe local or test validation or a dry-run where the project supports it, after the `Safe test environment` rules of the root `CLAUDE.md` have confirmed isolation. Never apply a migration to a production or shared database, mutate customer data, or roll back destructively on shared data. A migration that cannot be shown safe enough for the target is a blocking readiness issue, or `BLOCKED — NO VERDICT` if the evidence cannot be obtained.
 
 ### 9. Scope and boundaries of the reviews
 

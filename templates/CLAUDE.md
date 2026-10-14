@@ -19,6 +19,16 @@ This project uses ai-dev-framework.
 - Ask when something is ambiguous instead of guessing.
 - Do not touch files unrelated to the task.
 
+## Safe test environment
+
+These rules hold for every skill and agent, and during autonomous continuation. Reading and inspecting is always allowed.
+
+- Before any operation that can change or destroy data (tests that write, migrations, seeding, cleanup or reset, schema changes, bulk deletes and the like), find out what it would really hit and whether that is isolated from working data. First read what the project defines: `development.md`, the test configuration, environment files (never print secret values), scripts and container or service definitions. Then look at what actually exists, stopped or unused resources included, not only what is running. Then resolve the real target (host, port, database or schema, container, path) from the effective configuration. A name such as `test` or `dev` proves nothing.
+- Isolation is confirmed only when the project's own test infrastructure provides a resource that the project designates for tests and that is verifiably not a working one: a separate instance, store or path, not shared with working data.
+- Use the test infrastructure the project defines. Preparing it with the project's own configured command is part of using it: start a stopped resource, create it from the project's own definition (a compose profile, a setup script, a documented test-setup or migration command) and apply the project's own test setup. The isolation check above must pass for what that command actually targets. Never create a substitute (a database, schema, container, file store or other resource) that the project does not define, inside or next to a working resource, or on an assumption.
+- If isolation is confirmed, carry on without asking. If it cannot be confirmed, the project defines no test infrastructure, or the target is a working resource, stop before the operation, say what you found and what is missing, and ask the user for the missing verifiable information or for a fix of the configuration. Checks that touch no data (read-only checks, mocks) may continue.
+- The user's word does not replace the check. Never offer "please confirm that it is isolated" as the way forward, and do not accept it as proof. Where the evidence shows the target is a working resource, or contradicts itself (a name that says `test` on a port that serves working data), a destructive operation on it is not allowed even with the user's approval, and this overrides any rule elsewhere that allows an explicit authorization for real side effects. The way forward is a corrected configuration that points at the project's test resource, or new verifiable facts (recorded in `development.md` or in the resource definitions), and then the check is done again.
+
 ## Workflow continuation
 
 - Once the user has started a work item, carry it through the framework chain yourself. When a skill finishes (a gate PASS, or success for a skill that is not a gate), run the next step that its "Next skills" section names, through the Skill tool, without asking for permission. Routine steps (verification, code review, documentation updates, repeating a gate) need no extra go-ahead. A microchange continues only through the gates its own rules make applicable.

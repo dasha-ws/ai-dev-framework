@@ -116,7 +116,7 @@ CLAUDE.md
 |------|------------------------|-----------------|
 | `product.md` | Name, purpose, UI presence, as stated by the user or found in the README. | `TODO(product-spec)`. No invented users, goals or constraints. |
 | `architecture.md` | For existing projects: observed top-level layout, entry points, obvious components. Descriptions, not judgments. | `TODO(architecture)`. No assumed design intent. |
-| `development.md` | Language, framework, package manager, and build, test, lint and run commands found in configuration. | `TODO(confirm)`. No guessed stack, including for new projects. |
+| `development.md` | Language, framework, package manager, and build, test, lint and run commands found in configuration, and the test resource the configuration dedicates to tests, if any. | `TODO(confirm)`. No guessed stack, including for new projects. |
 | `infrastructure.md` | Infrastructure that already exists in the repo (Dockerfile, CI config, deploy scripts), stated as found. | `TODO(infrastructure)`. No suggested services. |
 | `ux-guide.md` | See step 3. | `TODO(ux)`. |
 
@@ -131,11 +131,11 @@ It may note that requirements live in `.claude/product/product-spec.md` and curr
 
 ### 8. Root `CLAUDE.md`
 
-Keep it a short entry point. It contains only: a brief description of the project (from the README or the user, otherwise `TODO`); where the project context lives (`.claude/skills/project-context/`); where current specs live (`.claude/work/`); the basic working rules for Claude Code in this project (read the router first and load only relevant context; treat specs in `.claude/work/` as the source for current work; do not invent facts; ask when something is ambiguous; do not touch files unrelated to the task); the `Workflow continuation` rules, copied from the template without changes; the communication language from step 1, as `Communication language: <language>`, with the rule that framework-managed files stay in English; and a note that the project uses ai-dev-framework. No requirements, architecture, infrastructure or other documentation goes into it.
+Keep it a short entry point. It contains only: a brief description of the project (from the README or the user, otherwise `TODO`); where the project context lives (`.claude/skills/project-context/`); where current specs live (`.claude/work/`); the basic working rules for Claude Code in this project (read the router first and load only relevant context; treat specs in `.claude/work/` as the source for current work; do not invent facts; ask when something is ambiguous; do not touch files unrelated to the task); the `Safe test environment` and `Workflow continuation` rules, copied from the template without changes; the communication language from step 1, as `Communication language: <language>`, with the rule that framework-managed files stay in English; and a note that the project uses ai-dev-framework. No requirements, architecture, infrastructure or other documentation goes into it.
 
 The project description is a summary of confirmed facts, so it must not change them. Write it from the same confirmed facts as `product.md` and check it against them. It may be short and it may be general, but it must not change who initiates an action, whether an action is automatic or user-triggered, timing, cause and effect, or any other material behavioural distinction (a step the user triggers is not one that happens on its own). If the confirmed behaviour does not fit in a short description, state it more generally, not more falsely. It stays a short orientation, not a second product description: the detail lives in `product.md`.
 
-If `CLAUDE.md` already exists, do not replace or restructure it. Show the short section you propose to add, including the `Workflow continuation` rules unless the file already has them and the communication-language rule unless the file already has a clear one, and apply it only after the user agrees. The language rule gets no separate overwrite or approval path.
+If `CLAUDE.md` already exists, do not replace or restructure it. Show the short section you propose to add, including the `Safe test environment` and `Workflow continuation` rules unless the file already has them and the communication-language rule unless the file already has a clear one, and apply it only after the user agrees. The language rule gets no separate overwrite or approval path.
 
 ### 9. Check your work, report and stop
 
