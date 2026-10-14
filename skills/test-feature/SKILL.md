@@ -13,7 +13,7 @@ It is **not** a builder. It does not write or fix production code, tests, fixtur
 
 `/test-feature` → FAIL → `/build-feature` → `/test-feature` again.
 
-After a PASS the next step is `/review-code`. Nothing is launched automatically.
+After a PASS the next step is `/review-code`. What follows is governed by "Next skills".
 
 **Reviewers.** They stay separate, never merged into one universal reviewer. `qa-reviewer` asks whether it was built correctly, `product-reviewer` whether the right thing was built (the approved product or feature intent), `ux-reviewer` whether the user-facing experience matches the approved UX expectations. Each takes its detailed professional criteria from its own agent definition. This skill owns applicability, workflow, gate invariants, safety, aggregation and routing.
 
@@ -92,7 +92,7 @@ Ask the user only what the sources cannot answer: unresolved product behaviour, 
 
 For substantial work, the applicable approved requirements and the current Tech Spec must exist and hold real content. If one is missing, empty or a not-started stub, the expected behaviour is not established: **stop with `BLOCKED — NO VERDICT`** and route to the matching workflow (see "Next skills").
 
-**How workflow state is established.** Whenever this skill depends on a previous gate or PASS state, it counts as reliably established only through the current conversation or workflow, or an explicit user confirmation. Never infer it from file contents, git history, commits, timestamps, hashes, metadata, comments or file existence. If it cannot be established, it does not count. If the conversation already establishes it, or nothing reliably shows a relevant substantive change of a source or after a PASS, do not ask for a ritual confirmation. This gate does not re-prove earlier gates: if the workflow is plainly the normal one and no conflict is known, take the sources as approved. Nothing is recorded for this.
+**How workflow state is established.** Whenever this skill depends on a previous gate or PASS state, it counts as reliably established only through the current conversation or workflow, an explicit user confirmation, or a `FRESH` row of the workflow ledger `.claude/work/status.md` (`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check`, see `templates/work/status.md`: the script decides freshness, and a `STALE` or missing row is not established). Never infer it from file contents, git history, commits, timestamps, comments or file existence. If it cannot be established, it does not count. If the conversation already establishes it, or nothing reliably shows a relevant substantive change of a source or after a PASS, do not ask for a ritual confirmation. This gate does not re-prove earlier gates: if the workflow is plainly the normal one and no conflict is known, take the sources as approved. This skill only reads the ledger for this.
 
 **Sources that changed after the build.** If it is reliably shown that after the implementation the applicable requirements, the relevant agreed architecture, the current Tech Spec or the approved UX direction changed substantively, in a way relevant to this work item or its verification scope, do not test the old implementation blindly, and do not apply the general "take the sources as approved" rule to that source:
 
@@ -196,15 +196,17 @@ The final result aggregates the applicable mandatory reviewers and the mandatory
 
 A PASS does not claim that the work is code-reviewed, security-approved, deployment-ready or production-ready. Those gates have not happened. Whether the skill ran correctly and whether the gate passed are two different questions.
 
-### 10. Report and stop
+### 10. Record, report and continue or stop
 
-The result exists only in the conversation. Report the work item and the applicable reviewers, with any skipped reviewer and its reason, and:
+**Recording.** On a PASS, as the very last step, after the integrity check of step 8, record it with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" record -Gate test-feature -Subject <id> -WithScope`, following `templates/work/status.md`. Add the work item's Tech Spec and Feature Spec as `-Inputs` where they exist. A microchange has none. A FAIL or BLOCKED result records nothing. If the work item has no `scope` row (an implementation made before the ledger existed), the PASS cannot be recorded: say so, and note that `/build-feature` records the scope when it next runs. The PASS then stands in this conversation only.
+
+The report exists only in the conversation. Report the work item and the applicable reviewers, with any skipped reviewer and its reason, and:
 
 - **PASS:** the verification summary (acceptance scenarios, failure paths, regression scope), the product-intent and UX summaries where they apply, the checks actually run and the evidence, non-blocking limitations and observations, `PASS` as applying to the implementation as tested against the current approved sources, and the next step `/review-code`, which judges the code quality of the now verified implementation.
 - **FAIL:** the concrete findings with reviewer or domain, scenario, expected, observed, evidence and impact, the verification that stayed incomplete, `FAIL`, the route by root cause (see "Next skills") and that the whole applicable run reruns after the fix.
 - **BLOCKED:** the reviewers and checks completed and not completed, the blocker and the unverified areas, `BLOCKED — NO VERDICT` and the required next action.
 
-For any result, list only as observations: the documentation impact (for `/update-docs`), pure code-quality observations (for `/review-code`) and security or deployment concerns (for the matching later gate). Then **stop**. Launch nothing.
+For any result, list only as observations: the documentation impact (for `/update-docs`), pure code-quality observations (for `/review-code`) and security or deployment concerns (for the matching later gate). Then continue or stop as "Next skills" says.
 
 ## Hard limits
 
@@ -219,31 +221,31 @@ For any result, list only as observations: the documentation impact (for `/updat
 - perform a code review, an architecture review, a security, infrastructure or deployment readiness review, claim their results, invent product strategy or a design, or call `ui-designer`;
 - read or expose real secrets;
 - imitate an unavailable reviewer;
-- launch `/review-code`, `/build-feature`, `/update-docs` or any other skill;
-- create framework entities, or hashes, approval registries, QA status files, persistent PASS metadata or persistent QA reports;
+- launch any skill other than the continuation step that "Next skills" allows;
+- create framework entities, or hashes, approval registries, QA status files, persistent PASS metadata or persistent QA reports, other than its own ledger row;
 - run `git add`, commit, stash, reset, checkout, restore, revert, clean or any other command that changes git state. Git is for inspection only.
 
 Allowed: the normal transient runtime and test artifacts of step 8, and nothing else.
 
 ## Outputs
 
-Conversation only. `/test-feature` intentionally creates or modifies no implementation, source-of-truth or durable project artifact. The only files that may appear are the normal transient testing and runtime artifacts of the project's own tooling. The report content is defined in step 10.
+The report is conversation only. `/test-feature` intentionally creates or modifies no implementation, source-of-truth or durable project artifact, apart from its own ledger row after a PASS. The only other files that may appear are the normal transient testing and runtime artifacts of the project's own tooling. The report content is defined in step 10.
 
 ## Completion criteria
 
-**Correct PASS completion:** every PASS condition of step 9 holds, the required project checks were completed, the baseline was taken and the dirty state assessed (step 5), the integrity comparison was made (step 8), `PASS` was reported and `/review-code` suggested, not launched.
+**Correct PASS completion:** every PASS condition of step 9 holds, the required project checks were completed, the baseline was taken and the dirty state assessed (step 5), the integrity comparison was made (step 8), `PASS` was reported and `/review-code` named as the next step, and launched only as "Next skills" allows.
 
 **Correct FAIL completion:** valid independent verification established a concrete defect of the implementation; the evidence is recorded and no self-fix occurred; the route by root cause and the rerun requirement were given. Not every remaining expensive reviewer must complete once a decisive FAIL is established, and the incomplete verification is reported.
 
 **Correct BLOCKED completion:** a valid gate could not be completed and no unsupported PASS or FAIL was invented; the blocker was identified, the completed and unresolved verification reported, and a recovery action given.
 
-In every case no git state was changed, the implementation and specs were not modified, and no framework entity or tracking artifact appeared. A correctly executed run is not the same as a PASS of the quality gate.
+In every case no git state was changed, the implementation and specs were not modified, and no framework entity or tracking artifact appeared besides the ledger row of a PASS. A correctly executed run is not the same as a PASS of the quality gate.
 
 ## Next skills
 
 The root cause decides the route, not the reviewer that found the problem.
 
-- `/test-feature` PASS → `/review-code`. Not launched automatically.
+- `/test-feature` PASS → `/review-code`.
 - An implementation defect, a missing, stale or wrong required test artifact, or an approved product intent or UX behaviour that is not implemented correctly → FAIL → `/build-feature` → `/test-feature`.
 - The requirements are ambiguous or must change → `/product-spec` or `/new-feature-spec` → `/review-spec` → `/architecture` if needed → `/tech-spec` if needed → `/review-spec` → `/build-feature` → `/test-feature`.
 - A substantive Tech Spec change → `/tech-spec` → `/review-spec` → `/build-feature` → `/test-feature`.
@@ -255,4 +257,6 @@ The root cause decides the route, not the reviewer that found the problem.
 - Nothing implemented → `/build-feature`. Framework structure missing → `/init-project`.
 - Code-quality observations are reported for `/review-code`, documentation impact for `/update-docs`, security or deployment concerns for the matching later gate. They are not QA failures, unless they directly make approved behaviour fail.
 
-After any fix or resolved blocker, the whole applicable `/test-feature` run repeats. No next skill is ever launched automatically.
+After any fix or resolved blocker, the whole applicable `/test-feature` run repeats.
+
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking, and after a FAIL hand the finding to its owner skill, as "Next skills" says. If the section is absent, name the next step and stop.

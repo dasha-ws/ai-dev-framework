@@ -95,7 +95,7 @@ If a "microchange" turns out to be substantial, **stop** and route to the normal
 
 ### 3. Check the `/review-code` PASS and the accepted implementation
 
-**How gate state is established.** Whenever this skill depends on a previous gate state, above all a `/review-code` PASS, it counts as reliably established only through the current conversation or workflow, or an explicit user confirmation. Never infer it from git history, commits, timestamps, hashes, metadata, comments or file existence. If it cannot be established, it does not count. If the conversation already establishes it, do not ask for a ritual confirmation.
+**How gate state is established.** Whenever this skill depends on a previous gate state, above all a `/review-code` PASS, it counts as reliably established only through the current conversation or workflow, an explicit user confirmation, or a `FRESH` row of the workflow ledger `.claude/work/status.md` (`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check`, see `templates/work/status.md`: the script decides freshness, and a `STALE` or missing row is not established). Never infer it from git history, commits, timestamps, comments or file existence. If it cannot be established, it does not count. If the conversation already establishes it, do not ask for a ritual confirmation.
 
 **Substantial work, and a microchange that went through `/review-code`.** A current `/review-code` PASS must be reliably established for the accepted implementation. It is not rerun here. If it is absent, was a FAIL or BLOCKED, is not established, or was invalidated by a relevant later change: `BLOCKED — NO VERDICT` → `/review-code` (or the appropriate upstream correction) → `/update-docs`. A microchange that never went through `/review-code` is not held to this, and `/review-code` is not required merely because `/test-feature` ran.
 
@@ -205,7 +205,9 @@ If the reviewer, a check or a tool changed anything during the review, or change
 
 **`BLOCKED — NO VERDICT`.** Valid synchronization or review cannot be completed: a required `/review-code` or `/test-feature` PASS that is absent, was a FAIL or BLOCKED, is not established or is invalidated; an accepted implementation that conflicts with the approved sources, or an implementation, spec or architecture problem found while documenting; a scope that cannot be determined safely; a needed correction that is not a safe in-scope documentation edit (it needs a user decision, an upstream fix or crossing ownership); an unreadable required source; an unavailable `docs-reviewer`; a mandatory documentation check that cannot run; a documentation decision that needs an owner; a pre-existing user edit that conflicts with a required write and cannot be merged safely; a reviewer or tool that changed disallowed files; correct documentation that depends on an unresolved upstream decision.
 
-### 13. Report and stop
+### 13. Record, report and continue or stop
+
+**Recording.** On a PASS, including a `no documentation changes required` PASS, as the very last step, after the integrity check of step 11, record it with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" record -Gate update-docs -Subject <id> -WithScope`, following `templates/work/status.md`. Add as `-Inputs` the documentation and context files that were changed or confirmed as still accurate. A FAIL or BLOCKED result records nothing. If the work item has no `scope` row (an implementation made before the ledger existed), the PASS cannot be recorded: say so, and note that `/build-feature` records the scope when it next runs. The PASS then stands in this conversation only.
 
 The result exists in the conversation. The changed documentation files are the durable output. Report:
 
@@ -213,7 +215,7 @@ The result exists in the conversation. The changed documentation files are the d
 - **FAIL:** the blocking findings, the affected files and scope, the checks and reviewer result, what stays unresolved and the recovery route.
 - **BLOCKED:** the blocker, the analysis, update and review work completed, what remains unresolved, `BLOCKED — NO VERDICT` and the required next action.
 
-Unrelated stale documentation is reported as an observation. Then **stop**. Launch nothing.
+Unrelated stale documentation is reported as an observation. Then continue or stop as "Next skills" says.
 
 ## Hard limits
 
@@ -226,15 +228,15 @@ Unrelated stale documentation is reported as an observation. Then **stop**. Laun
 - imitate an unavailable `docs-reviewer`, or perform the independent review themselves;
 - install documentation tooling, add a documentation platform or CI/CD;
 - expose real secrets;
-- launch `/deploy-check` or any other skill;
-- create framework entities, or hashes, status files, PASS registries or persistent approval metadata;
+- launch any skill other than the continuation step that "Next skills" allows;
+- create framework entities, or hashes, status files, PASS registries or persistent approval metadata, other than its own ledger row;
 - run `git add`, commit, stash, reset, checkout, restore, revert, clean, merge, rebase, cherry-pick or any other command that changes git state. Git is for inspection only.
 
 The skill may modify only documentation artifacts in the established scope, permitted descriptive context facts under the rules of step 7 (`development.md`, `infrastructure.md`, a documentation-only clarification in `ux-guide.md`, and the status-only synchronization of an already approved architecture in `architecture.md`), and established generated documentation outputs.
 
 ## Outputs
 
-The durable output is the changed documentation and permitted context files, or an explicit `no documentation changes required`. The report is conversation-only (step 13). Only normal transient output of documentation tooling may otherwise appear.
+The durable output is the changed documentation and permitted context files, or an explicit `no documentation changes required`. The report is conversation-only (step 13). The PASS is also recorded as its own row in the ledger. Only normal transient output of documentation tooling may otherwise appear.
 
 - **PASS:** the impact, the changed files or the no-change conclusion, the reviewer result and the next step `/deploy-check`.
 - **FAIL:** the unresolved documentation findings and the recovery route.
@@ -242,17 +244,17 @@ The durable output is the changed documentation and permitted context files, or 
 
 ## Completion criteria
 
-**Correct PASS completion:** one work item and the right mode; the accepted implementation and approved sources established; where step 3 requires it, the current `/review-code` and `/test-feature` PASSes reliably established; the impact analysed and the scope identified; pre-existing user changes preserved; the required documentation updated or a no-change conclusion reached; `docs-reviewer` available and its independent review completed, with the mandatory checks; no blocking finding remains; only allowed files changed; the repository integrity is preserved; `PASS` reported and `/deploy-check` suggested, not launched.
+**Correct PASS completion:** one work item and the right mode; the accepted implementation and approved sources established; where step 3 requires it, the current `/review-code` and `/test-feature` PASSes reliably established; the impact analysed and the scope identified; pre-existing user changes preserved; the required documentation updated or a no-change conclusion reached; `docs-reviewer` available and its independent review completed, with the mandatory checks; no blocking finding remains; only allowed files changed; the repository integrity is preserved; `PASS` reported and `/deploy-check` named as the next step, and launched only as "Next skills" allows.
 
 **Correct FAIL completion:** a concrete blocking documentation defect was independently established in the documentation scope; no unsupported implementation, spec or source change was made; the findings were reported and `/deploy-check` is not treated as ready.
 
 **Correct BLOCKED completion:** valid update or review could not be completed, no unsupported PASS or FAIL was invented, the blocker and the completed and remaining scope were reported, and the recovery route was given.
 
-In every case no git state was changed and no framework entity or tracking artifact appeared. A correctly executed run is not the same as a PASS of the documentation gate.
+In every case no git state was changed and no framework entity or tracking artifact appeared besides the ledger row of a PASS. A correctly executed run is not the same as a PASS of the documentation gate.
 
 ## Next skills
 
-- `/update-docs` PASS → `/deploy-check`. A no-change conclusion confirmed by `docs-reviewer` is a PASS too. Not launched automatically.
+- `/update-docs` PASS → `/deploy-check`. A no-change conclusion confirmed by `docs-reviewer` is a PASS too.
 - A documentation defect inside the allowed scope → fix the documentation → rerun `docs-reviewer`. An unresolved FAIL → correct the documentation → `/update-docs` again.
 - The `/review-code` PASS is absent, not established or invalidated → `BLOCKED — NO VERDICT` → `/review-code` → `/update-docs`.
 - A microchange's actually invoked `/test-feature` has no current PASS (FAIL, BLOCKED, not established or invalidated) → `BLOCKED — NO VERDICT` → the appropriate correction or re-verification → `/update-docs`.
@@ -267,4 +269,6 @@ In every case no git state was changed and no framework entity or tracking artif
 - A change of product truth or UX direction → `/product-spec` or the matching upstream workflow, not this skill.
 - Framework structure missing → `/init-project`.
 
-After a resolved blocker or an upstream fix, the whole applicable `/update-docs` run repeats. A documentation correction inside a run only reruns `docs-reviewer` (step 10). No next skill is ever launched automatically.
+After a resolved blocker or an upstream fix, the whole applicable `/update-docs` run repeats. A documentation correction inside a run only reruns `docs-reviewer` (step 10).
+
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking, and after a FAIL hand the finding to its owner skill, as "Next skills" says. If the section is absent, name the next step and stop.

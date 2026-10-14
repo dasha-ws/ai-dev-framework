@@ -4,6 +4,7 @@
 #   skills:    %USERPROFILE%\.claude\skills\<skill-name>\
 #   agents:    %USERPROFILE%\.claude\agents\<agent-name>.md
 #   templates: %USERPROFILE%\.claude\ai-dev-framework\templates\
+#   scripts:   %USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1
 #
 # It installs framework artifacts only. It does not initialise a target project.
 # The repository root is resolved from this script's own location, so the
@@ -26,7 +27,8 @@ $RequiredTemplates = @(
     'project-context\context\infrastructure.md',
     'project-context\context\ux-guide.md',
     'work\feature-spec.md',
-    'work\tech-spec.md'
+    'work\tech-spec.md',
+    'work\status.md'
 )
 
 function Assert-NonEmptyFile {
@@ -101,6 +103,7 @@ try {
     $skillsSource = Join-Path $repoRoot 'skills'
     $agentsSource = Join-Path $repoRoot 'agents'
     $templatesSource = Join-Path $repoRoot 'templates'
+    $workflowStateSource = Join-Path $PSScriptRoot 'workflow-state.ps1'
     foreach ($source in @($skillsSource, $agentsSource, $templatesSource)) {
         if (-not (Test-Path -LiteralPath $source -PathType Container)) {
             throw "Source directory is missing: $source"
@@ -130,17 +133,21 @@ try {
     foreach ($template in $RequiredTemplates) {
         Assert-NonEmptyFile (Join-Path $templatesSource $template)
     }
+    Assert-NonEmptyFile $workflowStateSource
 
     $claudeRoot = Join-Path $userProfile '.claude'
     $skillsDestination = Join-Path $claudeRoot 'skills'
     $agentsDestination = Join-Path $claudeRoot 'agents'
     $frameworkRoot = Join-Path $claudeRoot 'ai-dev-framework'
     $templatesDestination = Join-Path $frameworkRoot 'templates'
+    $scriptsDestination = Join-Path $frameworkRoot 'scripts'
+    $workflowStateDestination = Join-Path $scriptsDestination 'workflow-state.ps1'
 
     foreach ($path in @($claudeRoot, $skillsDestination, $agentsDestination, $frameworkRoot)) {
         Assert-DirectoryOrAbsent $path
     }
     Assert-ReplaceableDirectory $templatesDestination
+    Assert-ReplaceableDirectory $scriptsDestination
     foreach ($skill in $skills) {
         Assert-ReplaceableDirectory (Join-Path $skillsDestination $skill.Name)
     }
@@ -166,6 +173,9 @@ try {
 
     Sync-Directory $templatesSource $templatesDestination
 
+    New-Item -ItemType Directory -Force -Path $scriptsDestination | Out-Null
+    Copy-Item -LiteralPath $workflowStateSource -Destination $workflowStateDestination -Force
+
     # Confirm the runtime artifacts really arrived before reporting success.
     foreach ($skill in $skills) {
         Assert-NonEmptyFile (Join-Path (Join-Path $skillsDestination $skill.Name) 'SKILL.md')
@@ -176,11 +186,13 @@ try {
     foreach ($template in $RequiredTemplates) {
         Assert-NonEmptyFile (Join-Path $templatesDestination $template)
     }
+    Assert-NonEmptyFile $workflowStateDestination
 
     Write-Host 'ai-dev-framework installed.'
     Write-Host ("  skills:    {0} -> {1}" -f $skills.Count, $skillsDestination)
     Write-Host ("  agents:    {0} -> {1}" -f $agents.Count, $agentsDestination)
     Write-Host ("  templates: {0}" -f $templatesDestination)
+    Write-Host ("  scripts:   {0}" -f $scriptsDestination)
 }
 catch {
     $Host.UI.WriteErrorLine("ai-dev-framework installation failed: $($_.Exception.Message)")

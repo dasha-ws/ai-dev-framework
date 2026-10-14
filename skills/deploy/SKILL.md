@@ -21,12 +21,12 @@ description: The actual deployment step, for one deployment target at a time. Af
 
 **Source of truth.**
 
-- The current `/deploy-check` PASS, as established in the conversation (step 3), and the work item and target it covers.
+- The current `/deploy-check` PASS, as established in step 3, and the work item and target it covers.
 - `infrastructure.md`: the approved infrastructure facts (including the deployment mechanism) and, per target, the actual deployed state. It is the one canonical context. Nothing else is created.
 - The approved sources for what is deployed: the Tech Spec, `architecture.md`, `development.md`, the repository's deployment artifacts and documentation. `/architecture` owns the choice of a deployment mechanism. The Tech Spec only describes how an already accepted mechanism is implemented.
 - The real target, inspected read-only before any change.
 
-**Gate state.** No registry, hash, approval file or deployment-status record exists. A `/deploy-check` PASS counts only if the current conversation establishes it or the user explicitly confirms it, never from git history, timestamps, hashes or file existence.
+**Gate state.** A `/deploy-check` PASS counts only if the current conversation establishes it, the user explicitly confirms it, or the workflow ledger `.claude/work/status.md` has a `deploy-check` row for this work item and target (subject `<id>@<target>`) that `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check` reports `FRESH` (see `templates/work/status.md`), never from git history, timestamps or file existence. This skill writes no ledger row. Its single confirmation before the first change is never recorded: it is asked afresh on every run, and no earlier approval or PASS replaces it.
 
 ## When to use
 
@@ -72,7 +72,7 @@ Exactly one target per run: production, staging, a particular VPS or another exp
 
 ### 3. Establish the gate (deliver only)
 
-A current `/deploy-check` PASS must be established for this work item, this target and the version that will be deployed. If it is absent, not established, a FAIL or BLOCKED, or for another work item or target: **stop** → `/deploy-check` → `/deploy`. If it is reliably known that implementation, deployment artifacts, the target or a material deployment condition changed after the PASS, it no longer applies: **stop**, deploy nothing, → `/deploy-check`. Do not ask for a ritual confirmation if the conversation already establishes the PASS.
+A current `/deploy-check` PASS must be established for this work item, this target and the version that will be deployed. If it is absent, not established, a FAIL or BLOCKED, or for another work item or target: **stop** → `/deploy-check` → `/deploy`. If it is reliably known that implementation, deployment artifacts, the target or a material deployment condition changed after the PASS, it no longer applies: **stop**, deploy nothing, → `/deploy-check`. Do not ask for a ritual confirmation if the conversation or a `FRESH` ledger row already establishes the PASS.
 
 ### 4. Establish the mechanism and the known facts
 

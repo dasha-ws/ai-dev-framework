@@ -11,7 +11,7 @@ description: Create or substantially update the Feature Specification for one ne
 
 `.claude/work/<feature-name>/feature-spec.md`
 
-It is a feature-level requirements document. It is not a Product Spec (that describes the product as a whole), not an architecture document and not a Tech Spec, which later sits next to it as `tech-spec.md` and which this skill never creates. It never rewrites the Product Specification silently (step 3). After successful feature authoring the next mandatory gate is `/review-spec`. A product-level escape stops earlier and routes to `/product-spec`. Nothing is launched automatically.
+It is a feature-level requirements document. It is not a Product Spec (that describes the product as a whole), not an architecture document and not a Tech Spec, which later sits next to it as `tech-spec.md` and which this skill never creates. It never rewrites the Product Specification silently (step 3). After successful feature authoring the next mandatory gate is `/review-spec`. A product-level escape stops earlier and routes to `/product-spec`. What follows is governed by "Next skills".
 
 ## When to use
 
@@ -139,7 +139,7 @@ If the run stopped at the product-level escape, there is no normal completion: r
 - turn unknown decisions into assumptions (user-facing text included: an unagreed wording is never recorded as agreed);
 - run `git add`, commit, stash, reset, checkout, restore or any other command that changes git state;
 - create skills, agents, templates, scripts or document types, or change the structure of the Feature Specification template;
-- launch `/review-spec`, `/architecture`, `/tech-spec` or any other skill on its own.
+- launch any skill other than the continuation step that "Next skills" allows.
 
 During a normal run it may only create the `.claude/work/<feature-name>/` folder, if it does not exist yet, and create or change `.claude/work/<feature-name>/feature-spec.md`. It reads other project files but never modifies anything else: the Product Spec, `product.md`, other context files, the root `CLAUDE.md`, `tech-spec.md`, other Feature Specs, code, tests, documentation and infrastructure. If another artifact goes stale because of the new requirements, say so in the report and do not fix it here.
 
@@ -159,11 +159,11 @@ In the target project: `.claude/work/<feature-name>/feature-spec.md` (the create
 - substantive contradictions were resolved by the user, and no previously agreed decision was overwritten without agreement;
 - the acceptance criteria are verifiable and describe behaviour, the document contains no technical design, the Product Spec was not silently overridden, and no `tech-spec.md` was created or changed;
 - only `feature-spec.md` (and its folder, if new) changed, checked against the baseline, with the user's own changes not counted and a clean tree not required;
-- the report was given, and `/review-spec` was named as the next mandatory step, not run. A run that stopped at the product-level escape is not a completed run: `/product-spec` was named instead.
+- the report was given, and `/review-spec` was named as the next mandatory step, and launched only as "Next skills" allows. A run that stopped at the product-level escape is not a completed run: `/product-spec` was named instead.
 
 ## Next skills
 
 - `/review-spec`: the mandatory quality gate after creating or substantially updating a Feature Spec. Until it returns PASS, the Feature Spec is not reviewed or approved, and it is not a verified basis for technical design. On FAIL, fix the findings and run `/review-spec` again. Routing after a PASS (architecture or Tech Spec) belongs to `/review-spec`.
 - `/product-spec`: if the request turned out to be a product-level change, the product context was too unclear to specify the feature, or a new product-wide requirement, constraint or open question was found that belongs to the Product Specification.
 
-No next skill is ever launched automatically.
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking. A run that stopped at the product-level escape, or that left open questions for the user, does not continue. If the section is absent, name the next step and stop.

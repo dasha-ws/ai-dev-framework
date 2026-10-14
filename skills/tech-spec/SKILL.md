@@ -89,12 +89,13 @@ Before creating a new work item, look through `.claude/work/`, including `.claud
 
 ### 4. Check the prerequisites
 
-**Reliably established.** A PASS or another result named below counts as reliably established in exactly two cases:
+**Reliably established.** A PASS or another result named below counts as reliably established in exactly three cases:
 
 1. the current conversation or workflow contains it for this very version, and there has been no substantive change since;
-2. the user explicitly confirms that this very version already has that result and has not changed in substance since.
+2. the user explicitly confirms that this very version already has that result and has not changed in substance since;
+3. the workflow ledger `.claude/work/status.md` has a row for it that `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check` reports `FRESH` (see `templates/work/status.md`): a `review-spec` row of the upstream spec, with its `route=` note after a Feature Spec, or an `architecture` row. The script decides freshness. A `STALE` or missing row is not established.
 
-In every other case it is not established. Never infer it from a file existing, git history, commits, timestamps, hashes, metadata, naming or comments, and do not guess. If the conversation already establishes it, or nothing reliably shows a relevant change, do not ask for a ritual confirmation. No persistent approval status, hashes, registry, approval fields or review report files.
+In every other case it is not established. Never infer it from a file existing, git history, commits, timestamps, naming or comments, and do not guess. If the conversation or a `FRESH` ledger row already establishes it, do not ask for a ritual confirmation. This skill only reads the ledger and writes none of it: no approval fields, other registry or review report files.
 
 **Reviewed requirements.** A Tech Spec is not written on unreviewed requirements. Feature work needs a `/review-spec` PASS of the current `feature-spec.md`, initial product implementation one of the current `product-spec.md`. A substantial feature without a Feature Spec: do not write a Tech Spec instead of requirements, **stop** and suggest `/new-feature-spec`. If the upstream PASS is not established: **stop** and suggest `/review-spec` for the upstream spec first.
 
@@ -197,7 +198,7 @@ Do not call the Tech Spec reviewed or approved, do not run `/review-spec`, and d
 - change infrastructure, create external services or accounts, or deploy;
 - read or write real secrets;
 - call the `tech-spec-reviewer`, run `/review-spec` or call the Tech Spec reviewed or approved;
-- launch `/review-spec`, `/build-feature` or any other skill on its own;
+- launch any skill other than the continuation step that "Next skills" allows (`/build-feature` only after a `/review-spec` PASS);
 - change framework templates, or create framework entities;
 - run `git add`, commit, reset, checkout, stash, revert or any other command that changes git state;
 - create tracking, status, hash or dependency mechanisms, or a separate implementation-plan document, design document, ADR, migration file, test file, review report, approval registry or dependency registry.
@@ -220,7 +221,7 @@ A real microchange creates no spec file. A blocked run creates no false success:
 - an implementation-ready design was written in the installed template's structure. It implements the requirements without rewriting them and respects the architecture;
 - there are no blocking questions about requirements, architecture or dependencies;
 - the self-check passed, and only the allowed artifact changed, checked against the baseline, with no git state changed;
-- the user received the report, `/review-spec` was suggested and not launched, and the Tech Spec was not called approved.
+- the user received the report, `/review-spec` was named as the next step and launched only as "Next skills" allows, and the Tech Spec was not called approved.
 
 The microchange exit and a correctly reported blocked run are valid non-success paths. Authoring completion does not mean the Tech Spec is approved: to move on to `/build-feature`, the current version needs a `/review-spec` PASS.
 
@@ -232,4 +233,4 @@ The microchange exit and a correctly reported blocked run are valid non-success 
 - A blocking dependency on unfinished work: finish the prerequisite work first, then continue the current `/tech-spec` or the implementation flow, depending on the situation.
 - A real microchange: the lightweight path of step 2.
 
-No next skill is ever launched automatically.
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking. A Tech Spec with unresolved dependencies or open questions is not complete, so nothing continues. If the section is absent, name the next step and stop.

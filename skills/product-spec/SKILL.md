@@ -9,7 +9,7 @@ description: Create or substantially update the full Product Specification of a 
 
 `/product-spec` creates, or substantially updates, the full Product Specification of a **target project**: `.claude/product/product-spec.md`, the canonical product-level intended requirements. It turns the product idea, the user's answers and whatever the project already says into agreed requirements: what problem the product solves, for whom and why, what it must do, what is in and out of scope, which product rules and constraints are agreed, and how to tell at product level that they are met. It answers *what* and *why*, never *how it is built*: no architecture and no technical design.
 
-Two documents, two jobs. `product-spec.md` is the full specification. `.claude/skills/project-context/context/product.md` is a short durable digest of it for Claude Code, not a second requirements document. After substantive authoring, `/review-spec` is mandatory (step 8). Nothing is launched automatically.
+Two documents, two jobs. `product-spec.md` is the full specification. `.claude/skills/project-context/context/product.md` is a short durable digest of it for Claude Code, not a second requirements document. After substantive authoring, `/review-spec` is mandatory (step 8). What follows is governed by "Next skills".
 
 ## When to use
 
@@ -144,7 +144,7 @@ Report briefly: what was created or changed in the spec and in `product.md`; the
 - turn unknown decisions into assumptions (user-facing text included: an unagreed wording is never recorded as agreed), or give legal advice or legal conclusions about privacy and data processing;
 - run `git add`, commit, stash, reset, checkout, restore or any other command that changes git state;
 - create skills, agents, templates, scripts, folders or document types, or change the structure of the Product Specification template;
-- launch `/review-spec`, `/architecture`, `/tech-spec` or any other skill on its own.
+- launch any skill other than the continuation step that "Next skills" allows.
 
 During a normal run it changes only these two files:
 
@@ -170,11 +170,11 @@ In the target project: `.claude/product/product-spec.md` (the created or updated
 - the acceptance criteria are product-level and verifiable, and the document contains no technical design;
 - `product.md` is synced and remains short;
 - only the two allowed files changed, checked against the baseline, with the user's own changes not counted and a clean tree not required;
-- the report was given, and `/review-spec` was named as the next mandatory step, not run.
+- the report was given, and `/review-spec` was named as the next mandatory step, and launched only as "Next skills" allows.
 
 ## Next skills
 
 - `/review-spec`: the mandatory quality gate after creating or substantially updating the Product Specification. Until it returns PASS, the spec is not reviewed or approved. On FAIL, fix the findings and run `/review-spec` again. Routing after a PASS belongs to `/review-spec`.
 - `/new-feature-spec`: for later single features of an existing product, once the Product Specification is current enough.
 
-No next skill is ever launched automatically.
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking. Open product questions that only the user can answer are a stop. If the section is absent, name the next step and stop.

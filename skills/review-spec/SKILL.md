@@ -1,6 +1,6 @@
 ---
 name: review-spec
-description: The mandatory PASS/FAIL quality gate for one specification: a Product Spec, a Feature Spec or a Tech Spec. Identifies the target, checks prerequisites, hands the spec to the matching independent reviewer-agent, validates its output and returns an unambiguous PASS or FAIL with concrete blocking findings. Read-only: it never writes, fixes or approves anything on its own. Run it after /product-spec, /new-feature-spec or /tech-spec, and again after every substantive change.
+description: The mandatory PASS/FAIL quality gate for one specification: a Product Spec, a Feature Spec or a Tech Spec. Identifies the target, checks prerequisites, hands the spec to the matching independent reviewer-agent, validates its output and returns an unambiguous PASS or FAIL with concrete blocking findings. It never fixes or approves anything on its own. Its only write is its own row in the workflow ledger after a PASS. Run it after /product-spec, /new-feature-spec or /tech-spec, and again after every substantive change.
 ---
 
 # review-spec
@@ -17,7 +17,7 @@ It reviews **exactly one** spec per run:
 
 It identifies the target and its type, checks the prerequisites, hands the spec to the matching independent reviewer-agent, validates the reviewer's output and integrity, returns the outcome and stops. It never creates, rewrites, fixes or approves a spec itself. The reviewer is independent of whoever wrote the spec: "I wrote it, I fixed it, I gave myself a PASS" is the loop this gate exists to break.
 
-The outcome is `PASS`, `FAIL`, or no verdict when the review could not validly take place (step 7 defines all three). A PASS belongs only to the version that was reviewed. Nothing is launched automatically.
+The outcome is `PASS`, `FAIL`, or no verdict when the review could not validly take place (step 7 defines all three). A PASS belongs only to the version that was reviewed. What follows is governed by "Next skills".
 
 ## When to use
 
@@ -87,12 +87,13 @@ For a Feature Spec, the product context must be clear enough to review it: a sub
 
 None of this is added to a Product Spec or Feature Spec review. Everything here is checked **before** the `tech-spec-reviewer` is called. `/review-spec` only establishes what was already completed. It designs no architecture and takes no architecture decision.
 
-**Reliably established.** A fact or PASS named in this step, except the feature-implementation workflow (which follows from the work-item folder, see below), counts as reliably established in exactly two cases:
+**Reliably established.** A fact or PASS named in this step, except the feature-implementation workflow (which follows from the work-item folder, see below), counts as reliably established in exactly three cases:
 
 1. the current conversation or workflow contains it for this very version, and there has been no substantive change since;
-2. the user explicitly confirms it for this very version, and that there has been no substantive change since.
+2. the user explicitly confirms it for this very version, and that there has been no substantive change since;
+3. the workflow ledger `.claude/work/status.md` has a row for it that `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check` reports `FRESH`. The script decides freshness, not your own judgment of whether a change was substantive. A `STALE` or missing row is not established.
 
-In every other case it is not established. Never infer it from a file existing, from a non-empty or hand-filled file, from the content of the Tech Spec, from git history, commits, timestamps, hashes, metadata, naming or comments, or from your own fresh analysis, and do not guess. If the conversation already establishes it, or nothing reliably shows a relevant substantive change, do not ask for a ritual confirmation. No status file, registry, hash, version tracking, approval field or report file.
+In every other case it is not established. Never infer it from a file existing, from a non-empty or hand-filled file, from the content of the Tech Spec, from git history, commits, timestamps, naming or comments, or from your own fresh analysis, and do not guess. If the conversation or a `FRESH` ledger row already establishes it, do not ask for a ritual confirmation. The ledger is the only recorded state: no other status file, registry, version tracking, approval field in a spec or report file.
 
 **Workflow.** Establish which workflow the work item belongs to. Do not guess.
 
@@ -171,15 +172,15 @@ A valid reviewer result is the verdict: reviewer PASS is `PASS`, reviewer FAIL i
 
 No scores, percentages, ratings or grades, no `PASS WITH CONDITIONS`, and no severity framework unless the framework defines one separately.
 
-A PASS belongs only to the version that was reviewed. Any substantive change after it needs a new `/review-spec`, and an old PASS is never assumed to cover a changed spec. If it cannot be reliably established that the current version already passed, treat it as not reviewed and run the review again. There is no persistent approval status: no status file, review registry, hash, approval field in the spec or report file kept to store a PASS.
+A PASS belongs only to the version that was reviewed. Any substantive change after it needs a new `/review-spec`, and an old PASS is never assumed to cover a changed spec. If it cannot be reliably established that the current version already passed, treat it as not reviewed and run the review again. **Recording.** On a PASS, as the very last step, after the integrity check of step 6, record it with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" record -Gate review-spec`, following `templates/work/status.md`. The subject is `product-spec` for a Product Spec, `<id>/feature-spec` for a Feature Spec and `<id>/tech-spec` for a Tech Spec, where `<id>` is the work-item folder name. The inputs are the reviewed spec plus what the review depended on: for a Feature Spec the Product Spec; for a Tech Spec the upstream requirements spec and `architecture.md`. After a Feature Spec PASS, put the routing result into the note (`route=tech-spec` or `route=architecture`). A FAIL or no verdict records nothing. There is no other persistent approval status: no other status file, review registry, approval field in the spec or report file.
 
-**On FAIL**, show `FAIL` and the blocking findings. Each is concrete and actionable: where the problem is, what exactly is wrong, why it blocks the next stage, and what has to be clarified or fixed. If a finding needs a decision from the user, say so plainly, and do not present one wording of a requirement as the only correct one when the choice is theirs. Name the skill that usually fixes it, and say that `/review-spec` has to run again. Until a new review gives PASS, no move to the next mandatory stage. Do not fix the spec and do not launch the fixing skill.
+**On FAIL**, show `FAIL` and the blocking findings. Each is concrete and actionable: where the problem is, what exactly is wrong, why it blocks the next stage, and what has to be clarified or fixed. If a finding needs a decision from the user, say so plainly, and do not present one wording of a requirement as the only correct one when the choice is theirs. Name the skill that usually fixes it, and say that `/review-spec` has to run again. Until a new review gives PASS, no move to the next mandatory stage. Do not fix the spec yourself: the fix belongs to the authoring skill, which "Next skills" may launch.
 
-**On PASS**, show `PASS`, say which spec passed and that the PASS applies to the reviewed version, list the unresolved or non-blocking items the reviewer noted, and name the next stage for this type (see "Next skills"), with a clause on what that stage does and why it follows. Launch nothing.
+**On PASS**, show `PASS`, say which spec passed and that the PASS applies to the reviewed version, list the unresolved or non-blocking items the reviewer noted, and name the next stage for this type (see "Next skills"), with a clause on what that stage does and why it follows.
 
 **On no verdict**, explain what went wrong and what has to be done. The review is not counted as done. The one exception is a reviewer mutation together with an independently established FAIL: report the FAIL together with the integrity violation.
 
-The result exists only in the conversation. No report file. Then **stop**.
+The report exists only in the conversation, and a PASS is recorded as above. No report file. Then continue or stop as "Next skills" says.
 
 ## Hard limits
 
@@ -192,14 +193,14 @@ The result exists only in the conversation. No report file. Then **stop**.
 - turn a process failure into a content FAIL, or invent a verdict when the process is broken;
 - silently revert or repair a reviewer mutation;
 - run `git add`, commit, reset, checkout, stash, revert or any other command that changes git state;
-- create new specs, review report files, framework entities, or any approval, status, registry or hash tracking;
-- launch `/product-spec`, `/new-feature-spec`, `/tech-spec`, `/architecture`, `/build-feature` or any other skill on its own.
+- create new specs, review report files or framework entities, or any approval, status, registry or hash tracking other than its own ledger row;
+- launch any skill other than the continuation step that "Next skills" allows.
 
-At runtime it is entirely read-only. Its only output is the review result in the conversation.
+At runtime it is read-only for the project, apart from its own ledger row. Its output is the review result in the conversation.
 
 ## Outputs
 
-The only output is in the conversation, as defined in step 7: the target spec and its type, the reviewer-agent, the outcome, the blocking findings on FAIL or the non-blocking items on PASS, and the next permitted step. On no verdict: the explanation of the problem and the action needed. No project file is created or changed.
+The only output is in the conversation, as defined in step 7: the target spec and its type, the reviewer-agent, the outcome, the blocking findings on FAIL or the non-blocking items on PASS, and the next permitted step. On no verdict: the explanation of the problem and the action needed. The only project file that is written is the ledger row of a PASS.
 
 ## Completion criteria
 
@@ -208,9 +209,9 @@ The only output is in the conversation, as defined in step 7: the target spec an
 - exactly one target spec was determined unambiguously and its type identified;
 - the framework structure, the target, the template and the right reviewer-agent were valid and available, and for a Tech Spec the prerequisites of step 3 were reliably established;
 - the reviewer was called with the necessary and not excessive context, and its output is valid, refers to the right spec and contains one unambiguous `PASS` or `FAIL`;
-- integrity was checked against the baseline: the reviewer changed nothing, this skill changed no project file or git state, changes the user already had are not counted, and a clean tree is not required;
+- integrity was checked against the baseline: the reviewer changed nothing, this skill changed no project file except its own ledger row, written after this check, and no git state, changes the user already had are not counted, and a clean tree is not required;
 - the correct outcome was reported: `PASS`, or `FAIL` with concrete actionable findings, or no verdict with the blocker and the required action, and a PASS was stated as applying only to the reviewed version;
-- the next permitted step was named, and no skill was launched.
+- the next permitted step was named, and launched only as "Next skills" allows.
 
 A reviewer mutation never counts as a completed review. Only an independently established FAIL may still be reported, together with the integrity violation.
 
@@ -241,4 +242,4 @@ After **no verdict**, fix the problem first, at its owner:
 - a missing template or reviewer-agent: a fix of the framework installation;
 - a Tech Spec whose workflow cannot be determined, or is in conflict: ask the user.
 
-No next skill is ever launched automatically.
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking, and after a FAIL hand the findings to the authoring skill. The routing threshold after a Feature Spec PASS is applied as written. A route above that says "ask the user", and a Product Spec PASS for an existing project whose next stage the current task does not settle, stay questions to the user. If the section is absent, name the next step and stop.

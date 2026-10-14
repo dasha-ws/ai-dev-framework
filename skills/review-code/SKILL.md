@@ -106,7 +106,7 @@ If nothing of the work item is in the code: **stop with `BLOCKED — NO VERDICT`
 
 ### 4. Check the `/test-feature` PASS
 
-**How gate state is established.** Whenever this skill depends on a previous gate or review state (a `/test-feature` PASS, a reviewed Tech Spec, a required architecture review, the upstream review of a changed source), it counts as reliably established only through the current conversation or workflow, or an explicit user confirmation. Never infer it from file contents, git history, commits, timestamps, hashes, metadata, comments or file existence. If it cannot be established, it does not count. If the conversation already establishes it, do not ask for a ritual confirmation. Earlier gates are not re-proved when the conversation clearly establishes them and no conflict is known.
+**How gate state is established.** Whenever this skill depends on a previous gate or review state (a `/test-feature` PASS, a reviewed Tech Spec, a required architecture review, the upstream review of a changed source), it counts as reliably established only through the current conversation or workflow, an explicit user confirmation, or a `FRESH` row of the workflow ledger `.claude/work/status.md` (`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check`, see `templates/work/status.md`: the script decides freshness, and a `STALE` or missing row is not established). Never infer it from file contents, git history, commits, timestamps, comments or file existence. If it cannot be established, it does not count. If the conversation already establishes it, do not ask for a ritual confirmation. Earlier gates are not re-proved when the conversation clearly establishes them and no conflict is known.
 
 **Substantial work, and a microchange that went through `/test-feature`.** A current `/test-feature` PASS must be reliably established for the current implementation against the current approved sources. It is not rerun here. If it is absent, was a FAIL or BLOCKED, is not established, or was invalidated by a relevant later change: `BLOCKED — NO VERDICT` → the appropriate correction (`/build-feature` where the result was an implementation defect) → `/test-feature` → `/review-code`. A microchange that never went through `/test-feature` is not held to this.
 
@@ -226,15 +226,17 @@ Then `/review-code` runs again.
 
 **`PASS`.** Only if: the target, one work item and the mode are right; the scope and current technical sources are clear; where step 4 requires it, a current `/test-feature` PASS is reliably established and not known to be invalidated; `code-reviewer` completed an independent review; the mandatory checks were completed; the implementation materially conforms to the Tech Spec, the architecture boundaries and the material conventions; no blocking finding is unresolved and unrelated legacy issues did not affect the verdict; and the repository integrity is preserved. Do not claim more than the gate gave: not security-approved, deployment-ready, architecture-approved or documented.
 
-### 13. Report and stop
+### 13. Record, report and continue or stop
 
-The result exists only in the conversation. Report the work item, the review scope, the checks run, and:
+**Recording.** On a PASS, as the very last step, after the integrity check of step 11, record it with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" record -Gate review-code -Subject <id> -WithScope`, following `templates/work/status.md`. Add the work item's Tech Spec as `-Inputs` where it exists. A FAIL or BLOCKED result records nothing. If the work item has no `scope` row (an implementation made before the ledger existed), the PASS cannot be recorded: say so, and note that `/build-feature` records the scope when it next runs. The PASS then stands in this conversation only.
+
+The report exists only in the conversation. Report the work item, the review scope, the checks run, and:
 
 - **PASS:** the non-blocking observations, `PASS` as applying to the implementation as reviewed against the current approved technical sources and conventions, and the next step `/update-docs`, which works out what documentation the accepted code affects, possibly none.
 - **FAIL:** the blocking findings with evidence and locations, the non-blocking observations, `FAIL`, the route by root cause and the rerun sequence.
 - **BLOCKED:** the blocker, the review work completed, the scope left unreviewed, `BLOCKED — NO VERDICT` and the required next action.
 
-For any result, list as observations only: any documentation impact noticed in passing (`/update-docs` decides what needs updating), security or infrastructure concerns for the matching later gate, and clearly unrelated existing issues. Then **stop**. Launch nothing.
+For any result, list as observations only: any documentation impact noticed in passing (`/update-docs` decides what needs updating), security or infrastructure concerns for the matching later gate, and clearly unrelated existing issues. Then continue or stop as "Next skills" says.
 
 ## Hard limits
 
@@ -246,15 +248,15 @@ For any result, list as observations only: any documentation impact noticed in p
 - review the whole repository or fail the work item for clearly unrelated existing code;
 - imitate an unavailable `code-reviewer` or perform the independent review themselves;
 - read or expose real secrets;
-- launch `/update-docs`, `/build-feature`, `/test-feature` or any other skill;
-- create framework entities, or hashes, approval registries, status files, persistent PASS metadata or persistent review reports;
+- launch any skill other than the continuation step that "Next skills" allows;
+- create framework entities, or hashes, approval registries, status files, persistent PASS metadata or persistent review reports, other than its own ledger row;
 - run `git add`, commit, stash, reset, checkout, restore, revert, clean, cherry-pick, merge, rebase or any other command that changes git state. Git is for inspection only.
 
 Allowed: normal transient output of established read-only check tooling, and nothing else.
 
 ## Outputs
 
-Conversation only. No implementation, source-of-truth or durable project artifact is created or modified. The report content is defined in step 13.
+The report is conversation only. No implementation, source-of-truth or durable project artifact is created or modified, apart from its own ledger row after a PASS. The report content is defined in step 13.
 
 - **PASS:** the result, its scope statement and the next step `/update-docs`.
 - **FAIL:** the blocking findings and the route: `/build-feature` → `/test-feature` → `/review-code`, or the upstream route when a source must change first.
@@ -262,13 +264,13 @@ Conversation only. No implementation, source-of-truth or durable project artifac
 
 ## Completion criteria
 
-**Correct PASS completion:** the target and one work item are established in the right mode; the sources were read and the scope established; where step 4 requires it, a current `/test-feature` PASS is reliably established; `code-reviewer` was available and completed an independent review, with the mandatory checks; there is no blocking finding; the repository integrity is preserved; `PASS` was reported and `/update-docs` suggested, not launched.
+**Correct PASS completion:** the target and one work item are established in the right mode; the sources were read and the scope established; where step 4 requires it, a current `/test-feature` PASS is reliably established; `code-reviewer` was available and completed an independent review, with the mandatory checks; there is no blocking finding; the repository integrity is preserved; `PASS` was reported and `/update-docs` named as the next step, and launched only as "Next skills" allows.
 
 **Correct FAIL completion:** independent review validly established at least one evidence-backed blocking defect in the work item (or code it materially depends on); no self-fix occurred; the route by root cause and the rerun sequence were given.
 
 **Correct BLOCKED completion:** valid review could not be completed, no unsupported PASS or FAIL was invented, the blocker and the reviewed and unreviewed scope were reported, and the recovery route was given.
 
-In every case no git state was changed, the implementation and specs were not modified, and no framework entity or tracking artifact appeared. A correctly executed run is not the same as a PASS of the quality gate.
+In every case no git state was changed, the implementation and specs were not modified, and no framework entity or tracking artifact appeared besides the ledger row of a PASS. A correctly executed run is not the same as a PASS of the quality gate.
 
 ## Next skills
 
@@ -286,4 +288,6 @@ In every case no git state was changed, the implementation and specs were not mo
 - An unrelated existing code issue, documentation impact, or a security or infrastructure observation → reported only. No `/build-feature` for unrelated cleanup.
 - Nothing implemented → `/build-feature`. Framework structure missing → `/init-project`.
 
-After any fix or resolved blocker, the whole applicable `/review-code` run repeats. No next skill is ever launched automatically.
+After any fix or resolved blocker, the whole applicable `/review-code` run repeats.
+
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking, and after a FAIL hand the finding to its owner skill, as "Next skills" says. If the section is absent, name the next step and stop.

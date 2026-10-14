@@ -20,7 +20,7 @@ The framework includes skills for different stages of development and specialise
 
 The framework includes 11 AI roles. Ten are reviewers that independently check requirements, architecture, technical design, functional behaviour, product intent, UX, code quality, documentation, security and infrastructure. `ui-designer` is a separate design helper for projects that genuinely need a custom visual UI.
 
-This is not an autonomous software factory. You start each stage yourself. If a required decision cannot be established from the project, the framework asks you. Product and business decisions stay with you.
+This is not an autonomous software factory. You start a work item, and the framework carries it through the routine stages on its own (see [Workflow continuation](#workflow-continuation)). If a required decision cannot be established from the project, the framework asks you. Product and business decisions stay with you.
 
 - **Project-local context.** `/init-project` adds a small context to your project: product, architecture, development, infrastructure and, where applicable, UX conventions. A router tells Claude Code what to read for a particular task.
 - **Working language.** Before the project starts, the framework asks which language you prefer to work in. Specifications and other artifacts of your project are created in that language, while the framework's own internal files and instructions remain in English.
@@ -30,7 +30,7 @@ This is not an autonomous software factory. You start each stage yourself. If a 
 - **Gates.** Important work does not move forward until it passes the check for its stage. If a gate fails, the work goes back to the skill that owns the problem, and the check runs again afterward.
 - **One responsibility – one canonical place.** Every rule and artifact has a single owner. This README is a map: the detailed contracts live in [`skills/`](skills/), [`agents/`](agents/) and [`templates/`](templates/).
 
-Skills do not launch each other. Each one names the next step and stops. Gate results are not stored in files: a skill that depends on an earlier check relies on the current conversation or on your explicit confirmation.
+Each skill names the next step. Whether Claude Code then runs it by itself is governed by one rule, the `Workflow continuation` section of your project's root `CLAUDE.md`. Confirmed gate results and your explicit approvals are kept in one ledger, `.claude/work/status.md`, written and checked only by the installed `workflow-state.ps1`. A PASS counts only while the script reports it fresh, that is, while the content of every file it covers is unchanged and no unclaimed project file has been added or removed. A file counts as claimed once some work item lists it in its scope, so the work of independent tasks does not disturb each other's results. A PASS that is not fresh is not assumed: the gate runs again.
 
 ## Requirements
 
@@ -73,6 +73,7 @@ The installation is finished when the installer prints `ai-dev-framework install
 | Skills | `%USERPROFILE%\.claude\skills\<skill-name>\` |
 | Agents | `%USERPROFILE%\.claude\agents\<agent-name>.md` |
 | Runtime templates | `%USERPROFILE%\.claude\ai-dev-framework\templates\` |
+| Workflow state script | `%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1` |
 
 Skills and agents become available to Claude Code. The templates are runtime dependencies: framework skills read them (for example, `/init-project` creates your project's files from them). They are not part of your project, and the installer creates no project files.
 
@@ -97,7 +98,7 @@ Check the path before you approve: it should be inside the installed `ai-dev-fra
 
 ## Typical workflows
 
-The chains below are the normal order. A skill names its next step and never starts it for you.
+The chains below are the normal order. A skill names its next step, and with the `Workflow continuation` rules in place Claude Code runs the routine steps itself (see [Workflow continuation](#workflow-continuation)).
 
 ### New product
 
@@ -141,6 +142,16 @@ A `/deploy-check` PASS means ready to deploy, not deployed. Deploying is a separ
 - **Confirmation once, scope kept narrow.** Before the first change on the target, `/deploy` shows the target, the mechanism, the version and what will change, and waits for your confirmation. It does not ask again for every command. It stays within the current project and target, does not touch other projects or services on the same server, and takes no destructive server-wide action without your separate decision.
 - **External credentials.** When a credential is needed, `/deploy` explains what it is, why it is needed, where to get it, where to configure it and how to check it safely. You enter secret values yourself, never in the chat. They are not stored in project context or committed, and private key contents are never requested.
 - **Deployed state.** After a verified deploy or rollback, `/deploy` records the confirmed state of that target in `infrastructure.md`: current facts per target, with no secret values and no deployment history.
+
+### Workflow continuation
+
+New projects get the `Workflow continuation` section in their root `CLAUDE.md` from `/init-project`. For a project that already has a `CLAUDE.md`, `/init-project` proposes the section and adds it only after you agree. Without it, skills behave as before: they name the next step and stop.
+
+- **What runs by itself.** After a PASS (or a finished authoring or implementation step) Claude Code runs the next step of the chain without asking: review, verification, code review, documentation, readiness check.
+- **FAIL.** The findings go to the owner skill, it fixes them, and the gates the fix made stale run again. This repeats while each round makes progress. A fix that already failed is not repeated, and it stops and reports when no new justified approach is left or the rules do not allow the fix.
+- **What still stops it.** Approvals and decisions only you can give, product or substantial architecture decisions, a change of scope, a FAIL that cannot be fixed within the approved scope, and risks to data, infrastructure, security, privacy or spend.
+- **Never automatic.** `/deploy`, commits, pushes and releases, and starting another independent work item.
+- **After `/clear`, compaction or a restart.** Claude Code reads `.claude/work/status.md`, and the script reports which results are still fresh. The current stage is the first step of the normal chain without a fresh result. Only stale or missing PASSes are run again. Your recorded approvals are not asked again, and they never stand in for a gate result or the other way round. An approval that was never recorded is asked, not assumed. Nothing in the ledger is deleted automatically.
 
 ## Skills
 
@@ -222,6 +233,7 @@ The framework templates are not part of this structure. They stay in the install
 | Feature Specification, `.claude/work/<name>/feature-spec.md` | The requirements of one feature or change. | `/new-feature-spec` |
 | Technical Specification, `.claude/work/<name>/tech-spec.md` | How one work item is implemented. | `/tech-spec` |
 | `architecture.md` | The durable, agreed architecture. | `/architecture` |
+| Workflow status, `.claude/work/status.md` | Confirmed gate PASSes and your explicit approvals, with the content hashes they were given for. | The gate skills and the skills that ask you, through `workflow-state.ps1`. Created on first use. |
 | Other context files | Short durable facts and conventions: product digest, development, infrastructure, optional UX. | Created by `/init-project`. `/product-spec` syncs `product.md`, `/update-docs` may sync descriptive facts, and `/deploy` records the confirmed deployed state of a target in `infrastructure.md`. |
 
 The code shows what is implemented today. It does not define what the product should do. When a spec, the project context and the code disagree, the difference is resolved at its owning source instead of patching symptoms.

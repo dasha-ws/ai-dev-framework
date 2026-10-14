@@ -13,7 +13,7 @@ description: Work with the durable architecture of a target project in exactly o
 
 That file is durable architecture, not a Tech Spec and not an implementation plan. `/tech-spec` later describes how to implement one piece of work inside the agreed architecture.
 
-It works in exactly one of three modes (step 2): documenting the current architecture of an existing project, defining the initial target architecture of a new product, or resolving the architecture impact of a reviewed Feature Spec, and changing the architecture when a substantial change is needed. A PASS of the independent `architecture-reviewer` belongs to the current reviewed version of `architecture.md`. Nothing is launched automatically.
+It works in exactly one of three modes (step 2): documenting the current architecture of an existing project, defining the initial target architecture of a new product, or resolving the architecture impact of a reviewed Feature Spec, and changing the architecture when a substantial change is needed. A PASS of the independent `architecture-reviewer` belongs to the current reviewed version of `architecture.md`. What follows is governed by "Next skills".
 
 ## When to use
 
@@ -80,12 +80,13 @@ Choose exactly one mode, from the user's request, the current workflow and the p
 
 ### 3. Check the reviewed upstream requirements (modes 2 and 3)
 
-Modes 2 and 3 need the current version of the reviewed requirements: `.claude/product/product-spec.md` for mode 2, `.claude/work/<feature-name>/feature-spec.md` for mode 3. A `/review-spec` PASS of the current version counts as **reliably established** in exactly two cases:
+Modes 2 and 3 need the current version of the reviewed requirements: `.claude/product/product-spec.md` for mode 2, `.claude/work/<feature-name>/feature-spec.md` for mode 3. A `/review-spec` PASS of the current version counts as **reliably established** in exactly three cases:
 
 - the current conversation or workflow contains that PASS for this very version, and the spec has had no substantive change since;
-- the user explicitly confirms that the current version already passed `/review-spec` and has not changed in substance since.
+- the user explicitly confirms that the current version already passed `/review-spec` and has not changed in substance since;
+- the workflow ledger `.claude/work/status.md` has a `review-spec` row for it that `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check` reports `FRESH` (see `templates/work/status.md`). The script decides freshness. A `STALE` or missing row is not established.
 
-In every other case it is not established. Never infer it from the file existing, git history, commits, timestamps, hashes, naming, comments or metadata. If the conversation already establishes it, do not ask for a ritual confirmation. If it cannot be established: do not design the architecture, **stop** and suggest `/review-spec` for the upstream spec. No persistent approval status, registry, hashes or review report files.
+In every other case it is not established. Never infer it from the file existing, git history, commits, timestamps, naming or comments. If the conversation or a `FRESH` ledger row already establishes it, do not ask for a ritual confirmation. If it cannot be established: do not design the architecture, **stop** and suggest `/review-spec` for the upstream spec. No other status file, registry or review report files.
 
 Mode 1 needs no requirements PASS, and none is invented for it.
 
@@ -178,7 +179,9 @@ The mutation itself is a process problem. It does not prove a defect of the arch
 
 Substantive architecture work is not finished as successful until the reviewer returns PASS.
 
-**On PASS.** The architecture counts as reviewed for the current state of `architecture.md`. Say so briefly, list the acceptable non-blocking items, if any, and suggest `/tech-spec` where the work served a new product or feature. Launch nothing. A later substantive change of `architecture.md` needs a new review. No status file, hash, registry or approval field.
+**On PASS.** The architecture counts as reviewed for the current state of `architecture.md`. Say so briefly, list the acceptable non-blocking items, if any, and suggest `/tech-spec` where the work served a new product or feature. A later substantive change of `architecture.md` needs a new review.
+
+**Recording.** After a PASS of the last substantive version, as the very last step of the run, after the boundary and integrity checks, record it with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" record -Gate architecture -Subject architecture`, following `templates/work/status.md`. The inputs are `architecture.md` and the reviewed upstream requirements spec of the mode. A no-op or a narrow factual sync (Case B) had no reviewer and records nothing. No other status file, hash, registry or approval field.
 
 ### 10. Report and stop
 
@@ -189,7 +192,7 @@ Report briefly, in the conversation:
 - **A narrow factual sync (B1):** that no substantial architecture change was needed, which existing statements were corrected, removed or added and why they follow from the reviewed requirements, that the reviewer was not invoked because it does not apply, and the next step `/tech-spec`.
 - **A stopped run** (a prerequisite, a missing reviewer or template, a missing upstream PASS, a pending user decision or an integrity problem): the blocker, the stage, the changes already made, and the required upstream or recovery route. No false success.
 
-Then **stop**. Do not launch the next skill.
+Then continue or stop as "Next skills" says.
 
 ## Hard limits
 
@@ -203,14 +206,14 @@ Then **stop**. Do not launch the next skill.
 - hide a difference between target and implementation by rewriting current or target wording;
 - imitate or substitute an unavailable `architecture-reviewer`;
 - run `git add`, commit, reset, checkout, stash, revert or any other command that changes git state;
-- create framework entities, or hashes, status files, PASS registries or approval metadata;
-- launch `/tech-spec` or any other skill on its own.
+- create framework entities, or hashes, status files, PASS registries or approval metadata other than its own ledger row;
+- launch any skill other than the continuation step that "Next skills" allows.
 
-During a normal run it changes only `.claude/skills/project-context/context/architecture.md`. It reads other project files but never modifies them: specs, other context files, the root `CLAUDE.md`, code, tests, documentation, infrastructure and deploy files, templates and agents.
+During a normal run it changes only `.claude/skills/project-context/context/architecture.md`, plus its own ledger row after a PASS. It reads other project files but never modifies them: specs, other context files, the root `CLAUDE.md`, code, tests, documentation, infrastructure and deploy files, templates and agents.
 
 ## Outputs
 
-In the conversation: the report of step 10. In the target project: the updated `architecture.md`, only when the work actually required a write, including a narrow factual sync. A valid no-op, and a stopped run, change no file, and no artifact is created to prove that the skill ran. No status or PASS file.
+In the conversation: the report of step 10. In the target project: the updated `architecture.md`, only when the work actually required a write, including a narrow factual sync. A valid no-op, and a stopped run, change no file, and no artifact is created to prove that the skill ran. The only status record is the ledger row of a reviewer PASS.
 
 ## Completion criteria
 
@@ -222,11 +225,11 @@ In the conversation: the report of step 10. In the target project: the updated `
 - `architecture.md` reflects the current durable agreed architecture with current and target told apart, hides no change of requirements, and the self-check passed;
 - the `architecture-reviewer` returned PASS for the last substantive version of `architecture.md`, and every blocking finding was fixed with the review repeated;
 - this skill changed no file other than `architecture.md`, and no git state, checked against the baselines, with the user's own changes not counted and a clean tree not required;
-- the user received the report, and no next skill was launched.
+- the user received the report, and the next skill was launched only as "Next skills" allows.
 
-**Valid no-op:** the architecture work was correctly determined unnecessary, nothing was written and no reviewer was called, the result was stated explicitly and `/tech-spec` was suggested. It is not counted as substantive architecture work, because none was required.
+**Valid no-op:** the architecture work was correctly determined unnecessary, nothing was written and no reviewer was called, the result was stated explicitly and `/tech-spec` was named as the next step. It is not counted as substantive architecture work, because none was required.
 
-**Valid narrow factual sync (B1):** no substantial architecture change was required, only the factual statements that the reviewed requirements unambiguously changed were edited, no new architecture decision was taken, no reviewer was called, the result was stated explicitly and `/tech-spec` was suggested.
+**Valid narrow factual sync (B1):** no substantial architecture change was required, only the factual statements that the reviewed requirements unambiguously changed were edited, no new architecture decision was taken, no reviewer was called, the result was stated explicitly and `/tech-spec` was named as the next step.
 
 **Correct stopped or blocked run:** no false success, the blocker and the route were reported, and the user's and unrelated changes were preserved.
 
@@ -240,4 +243,4 @@ In the conversation: the report of step 10. In the target project: the updated `
 - The implementation drifted from the approved architecture: `/architecture`.
 - A prerequisite, the template, the reviewer or the upstream PASS is missing: fix that first (`/init-project` for a missing framework structure, `/review-spec` for an upstream spec without an established PASS, a fix of the framework installation for a missing template or `architecture-reviewer`).
 
-No next skill is ever launched automatically.
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking. A stopped run, a pending architecture decision of the user and a Mode 1 result with no named work item do not continue. If the section is absent, name the next step and stop.

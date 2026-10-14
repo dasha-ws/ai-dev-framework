@@ -12,7 +12,7 @@ description: Implement one work item in code: production code, its automated tes
 - **Substantial work** implements the current reviewed Tech Spec, `.claude/work/<work-item-name>/tech-spec.md`. A **real microchange** is work where a separate Tech Spec would be decoration. The user's request is then the work instruction.
 - It is an implementation skill, not an independent verification or review gate. It calls no reviewer.
 - It can be entered again when a downstream gate returns a concrete finding whose root cause is implementation-side (step 2).
-- Done means ready for the applicable verification. It does not mean tested, reviewed, documented or deploy-ready. Nothing is launched automatically.
+- Done means ready for the applicable verification. It does not mean tested, reviewed, documented or deploy-ready. What follows is governed by "Next skills".
 
 ## When to use
 
@@ -63,6 +63,8 @@ Follow the target project's root `CLAUDE.md` and conventions: commands, style, t
 
 **Work item.** Exactly one, from the current Tech Spec. If the Tech Spec describes several or the request mixes several, do not merge them: take the one the Tech Spec and the user point to, and ask if that is unclear. No neighbouring feature "while we are here". If the work item depends on unfinished work: when the Tech Spec already provides for it and it only affects the order, keep the order. If it blocks a safe implementation, **stop** and report the blocker. Never implement someone else's work item quietly.
 
+**Work item id.** For substantial work the id is the name of the work-item folder under `.claude/work/`. A microchange has no folder: choose a short kebab-case id that is neither a folder under `.claude/work/` or `.claude/work/completed/` nor the id of a different change in `.claude/work/status.md` (run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check`). If the ledger already has a `scope` row with that id and the request plainly continues that same change, reuse it. If it is unclear whether it is the same change, ask. Never reuse an id for a different change.
+
 **Entry.** One of three:
 
 - **First implementation.** Nothing of the work exists in the code yet.
@@ -73,12 +75,13 @@ Follow the target project's root `CLAUDE.md` and conventions: commands, style, t
 
 **Sources.** The Product Spec and the reviewed Feature Spec define the requirements. The reviewed Tech Spec defines the design of substantial work. `architecture.md` defines the agreed durable architecture. Project context holds durable constraints. Code shows the current implementation, which is not intended behaviour just because it exists. `/build-feature` does not re-review any of them. It only notices a known mismatch or change and routes it.
 
-**The prerequisite (substantial work).** The current version of the Tech Spec must have a `/review-spec` PASS. That PASS already covers the upstream prerequisites that `/review-spec` checks. It counts as **reliably established** in exactly two cases:
+**The prerequisite (substantial work).** The current version of the Tech Spec must have a `/review-spec` PASS. That PASS already covers the upstream prerequisites that `/review-spec` checks. It counts as **reliably established** in exactly three cases:
 
 1. the current conversation or workflow contains a `/review-spec` PASS for this very version, and the Tech Spec has had no substantive change since;
-2. the user explicitly confirms that the current version already got a PASS and has not changed in substance since.
+2. the user explicitly confirms that the current version already got a PASS and has not changed in substance since;
+3. the workflow ledger `.claude/work/status.md` has a `review-spec` row with the subject `<id>/tech-spec` that `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" check` reports `FRESH` (see `templates/work/status.md`). The script decides freshness. A `STALE` or missing row is not established.
 
-In every other case it is not established. Never infer it from the Tech Spec existing, git history, commits, timestamps, hashes, metadata, comments, naming or status fields. If it is not established: do not implement. **Stop** and suggest `/review-spec`. If the conversation already establishes it, or nothing reliably shows a relevant change, do not ask for a ritual confirmation. No persistent approval tracking.
+In every other case it is not established. Never infer it from the Tech Spec existing, git history, commits, timestamps, comments, naming or status fields in the spec. If it is not established: do not implement. **Stop** and suggest `/review-spec`. If the conversation or a `FRESH` ledger row already establishes it, do not ask for a ritual confirmation.
 
 **Sources that changed after the PASS.** The same rule of reliable establishment applies. If it is reliably shown that after the PASS the applicable upstream requirements or the agreed `architecture.md` changed substantively, the old PASS is not a sufficient basis. Do not run a re-review here. **Stop** and route upstream by root cause:
 
@@ -160,15 +163,17 @@ In a git repository, repeat `git status --short -uall`, `git diff` and `git diff
 
 If you find an accidental unrelated change of your own, fix only that change, and only if it is safe. Do not reset or revert the user's changes. This is a scope and integrity check. Independent code-quality judgement is `/review-code`.
 
-### 8. Report and stop
+### 8. Report and continue or stop
 
 The report exists only in the conversation.
+
+**Recording the scope.** After step 7 and before the report, record the work item with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.claude\ai-dev-framework\scripts\workflow-state.ps1" record -Gate scope -Subject <id> -Inputs <files> -Note kind=<feature|product|microchange>`, following `templates/work/status.md`. The inputs are all files of the work item, not only those changed in this run: production code, tests, configuration and migrations, including those of earlier runs. It is the same row on every run, replaced as a whole. A run that stopped or blocked records nothing.
 
 **Success:** the work item; what was implemented and the main files and components changed; the tests added or updated; the developer checks actually run and their results; the required checks that could not run; the dependencies, configuration or migrations changed, if any; limitations and relevant pre-existing failures; the documentation and context that will probably need syncing later; the next step, `/test-feature`, which independently verifies the implementation against the approved requirements. Do not call the work fully tested, QA-passed, code-reviewed, documentation-complete or deploy-ready.
 
 **Blocked or stopped:** the blocker or root cause; the stage at which the run stopped; the changes already made; the checks already run; and the needed upstream route, prerequisite, user decision or recovery option. No false completion.
 
-Then **stop**. Launch nothing.
+Then continue or stop as "Next skills" says.
 
 ## Hard limits
 
@@ -177,16 +182,16 @@ Then **stop**. Launch nothing.
 - change requirements or architecture silently, modify a Product Spec, a Feature Spec or the Tech Spec, modify durable project context or the target's root `CLAUDE.md`, edit `architecture.md`, or touch framework templates, skills or agents;
 - change anything outside the write scope of step 5, or add unrelated features, refactors or silent fixes of unrelated failures;
 - overwrite or revert user work destructively, or run any command that changes git state (`git add`, commit, stash, reset, checkout, restore, revert and the like);
-- create framework entities, or persistent tracking, status, hash, recovery or PASS metadata;
+- create framework entities, or persistent tracking, status, hash, recovery or PASS metadata, other than its own `scope` row in `.claude/work/status.md`;
 - install global or unrelated tooling or dependencies;
 - perform an unauthorized real external side effect, mutate production or shared data, or deploy, release or provision;
 - read or expose secrets;
 - claim an independent QA, code-review or deployment verdict, or call a reviewer agent;
-- launch `/test-feature`, `/review-code`, `/update-docs` or any other skill.
+- launch any skill other than the continuation step that "Next skills" allows.
 
 ## Outputs
 
-- **Successful implementation.** In the target project: the implementation artifacts of the current work item, with the automated tests where appropriate. In the conversation: the report of step 8. A microchange changes only the minimally necessary artifacts, gets proportional developer verification and no artificial Tech Spec.
+- **Successful implementation.** In the target project: the implementation artifacts of the current work item, with the automated tests where appropriate, and the `scope` row of the work item in `.claude/work/status.md`. In the conversation: the report of step 8. A microchange changes only the minimally necessary artifacts, gets proportional developer verification and no artificial Tech Spec.
 - **Blocked run.** No false success. The blocker and the required previous step or user decision are reported.
 
 ## Completion criteria
@@ -200,7 +205,7 @@ A successful substantial run is complete when all of these are true:
 - there is no known unresolved implementation defect inside the scope. On a return after a downstream finding, the fix addresses that concrete finding inside the approved scope and design;
 - there is no unresolved known mismatch with the requirements, the design or the architecture;
 - the baseline and the user's changes were preserved, only allowed artifacts changed, and no unauthorized real external side effect happened;
-- the user got the report, and `/test-feature` was suggested, not launched.
+- the user got the report, and `/test-feature` was named as the next step, and launched only as "Next skills" allows.
 
 A microchange meets the proportional equivalent: no Tech Spec was needed, the change is minimal, and the verification is proportional. A correctly stopped or blocked run makes no success claim and reports the blocker and the route. A `/test-feature` PASS is not part of these criteria. That is the next stage.
 
@@ -218,4 +223,4 @@ A microchange meets the proportional equivalent: no Tech Spec was needed, the ch
 - An unfinished dependency blocks the work: finish the prerequisite work first, then resume at the appropriate stage.
 - A project instruction and a framework rule cannot both be satisfied: the user decides first.
 
-No next skill is ever launched automatically.
+**Continuation.** Follow the `Workflow continuation` section of the target's root `CLAUDE.md`: when it is present and none of its stop conditions holds, run the next step named above through the Skill tool without asking. For a microchange that step is only the gate its proportional rules make applicable, and no gate is added. If the section is absent, name the next step and stop.
