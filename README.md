@@ -145,7 +145,7 @@ A `/deploy-check` PASS means ready to deploy, not deployed. Deploying is a separ
 
 ### Workflow continuation
 
-New projects get the `Workflow continuation` section in their root `CLAUDE.md` from `/init-project`. For a project that already has a `CLAUDE.md`, `/init-project` proposes the section and adds it only after you agree. Without it, skills behave as before: they name the next step and stop.
+New projects get the rule sections `Workflow continuation`, `Safe test environment` and `Finding files and heavy operations` in their root `CLAUDE.md` from `/init-project`. For a project that already has a `CLAUDE.md`, `/init-project` proposes the missing sections and adds them only after you agree. Without `Workflow continuation`, skills behave as before: they name the next step and stop. The two other bullets below, data safety and searching, are governed by their own sections.
 
 - **What runs by itself.** After a PASS (or a finished authoring or implementation step) Claude Code runs the next step of the chain without asking: review, verification, code review, documentation, readiness check.
 - **FAIL.** The findings go to the owner skill, it fixes them, and the gates the fix made stale run again. This repeats while each round makes progress. A fix that already failed is not repeated, and it stops and reports when no new justified approach is left or the rules do not allow the fix.
@@ -246,6 +246,8 @@ The code shows what is implemented today. It does not define what the product sh
 2. Run the installer again, as in [Installation](#installation): double-click `install.cmd` on Windows, or run `scripts/install.ps1` directly from PowerShell. Both use the same canonical `scripts/install.ps1`.
 
 The installer refreshes every current framework skill and the runtime template tree from the checkout, replacing their installed copies, so edits made inside those copies are overwritten. It overwrites the current framework agent files. Other skills, other agents and other Claude configuration are left alone. The installer keeps no record of what it installed before, so it cannot remove a skill or agent that a newer version no longer ships. Delete such leftovers by hand.
+
+Updating never changes your projects. A project keeps the rule sections that its root `CLAUDE.md` already has, so rules added in a newer version reach it only when you run `/init-project` there again: it proposes the missing sections and changes nothing without your agreement.
 
 ## Platform support and limitations
 
