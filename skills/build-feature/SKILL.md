@@ -1,6 +1,6 @@
 ---
 name: build-feature
-description: Implement one work item in code: production code, its automated tests, and developer-level checks along the way. For substantial work it needs a current Tech Spec with an established /review-spec PASS; a real microchange may go without one. Not an independent quality gate: it never grants a /test-feature PASS, never reviews its own code and never calls a reviewer. Can be re-run to correct a concrete implementation-side finding of /test-feature, /review-code, /update-docs or /deploy-check. The next mandatory step is /test-feature.
+description: Implement one work item in code: production code, its automated tests, and developer-level checks along the way. Also the entry for a direct request to fix or change code (a typo, a small bugfix, a config tweak) without naming a skill: such a real microchange needs no Tech Spec, and this skill records its scope, which later gates require. Substantial work needs a current Tech Spec with an established /review-spec PASS. Not an independent quality gate: it never grants a /test-feature PASS, never reviews its own code and never calls a reviewer. Can be re-run to correct a concrete implementation-side finding of /test-feature, /review-code, /update-docs or /deploy-check. The next mandatory step is /test-feature.
 ---
 
 # build-feature
